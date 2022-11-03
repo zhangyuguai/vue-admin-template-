@@ -38,9 +38,9 @@ router.beforeEach(async(to, from, next) => {
             global.antRouter = []
             next()
           }
-          debugger;
+
           const menus = filterAsyncRouter(store.getters.menus) // 过滤路由
-          debugger;
+
           router.addRoutes(menus) // 动态添加路由
           global.antRouter = menus // 将路由数据传递给全局变量，做侧边栏菜单渲染工作
 
@@ -71,7 +71,7 @@ router.beforeEach(async(to, from, next) => {
 
 // 遍历后台传来的路由字符串，转换为组件对象
 function filterAsyncRouter(asyncRouterMap) {
-  debugger;
+
   const accessedRouters = asyncRouterMap.filter(route => {
     if (route.component) {
       if (route.component === 'Layout') { // Layout组件特殊处理

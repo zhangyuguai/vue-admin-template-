@@ -30,7 +30,7 @@ service.interceptors.request.use(
 // todo 处理响应结果
 service.interceptors.response.use(
   response => {
-    debugger;
+
     const message = response.data.message
     const code = response.data.code
     if (code !== 200) { // 改成后端响应成功的状态码

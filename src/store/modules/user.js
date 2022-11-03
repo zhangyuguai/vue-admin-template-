@@ -47,7 +47,7 @@ const actions = {
       login({ username: username.trim(), password: password }).then(response => {
         const { data } = response.data
         console.log(data)
-        debugger;
+
         commit('SET_TOKEN', data.token)
         setToken(data.token)
         resolve()
@@ -67,7 +67,6 @@ const actions = {
         }
         const { name, avatar, roles, routerVos } = data
 
-        debugger;
         let menus=routerVos
         /**
          * 获取异步路由后加入404路由能解决刷新后【丢失路由跳转404页面】问题
