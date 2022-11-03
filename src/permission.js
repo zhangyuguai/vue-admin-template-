@@ -6,8 +6,6 @@ import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
 import Layout from '@/layout'
-import test from '@/views/system/admin/course/course'
-// /system/admin/course/course
 import _import from '@/router/_import_proudction'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
