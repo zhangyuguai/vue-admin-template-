@@ -15,6 +15,7 @@ export function isExternal(path) {
  * @returns {Boolean}
  */
 export function validUsername(str) {
-  const valid_map = ['admin', 'editor']
+  //todo 限制登陆账号
+  const valid_map = ['admin', 'editor','2001']
   return valid_map.indexOf(str.trim()) >= 0
 }

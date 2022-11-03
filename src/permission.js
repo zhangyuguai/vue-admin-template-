@@ -5,24 +5,26 @@ import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
+import Layout from '@/layout'
+import test from '@/views/system/admin/course/course'
+// /system/admin/course/course
+import _import from '@/router/_import_proudction'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login'] // no redirect whitelist
 
+// 路由拦截器
 router.beforeEach(async(to, from, next) => {
-  // start progress bar
+  // 进度条加载
   NProgress.start()
-
-  // set page title
+  // 获取page标题
   document.title = getPageTitle(to.meta.title)
-
-  // determine whether the user has logged in
+  // 获取token决定用户是否可以登录
   const hasToken = getToken()
-
   if (hasToken) {
     if (to.path === '/login') {
-      // if is logged in, redirect to the home page
+      // 如果已登录，则重定向到主页
       next({ path: '/' })
       NProgress.done()
     } else {
@@ -31,12 +33,23 @@ router.beforeEach(async(to, from, next) => {
         next()
       } else {
         try {
-          // get user info
+          // 每次刷新都会执行try获取用户信息，所以getInfo必须要有，后端不提供怎么办？揍他
           await store.dispatch('user/getInfo')
+          // **在这里做动态路由**
+          if (store.getters.menus.length < 1) {
+            global.antRouter = []
+            next()
+          }
+          debugger;
+          const menus = filterAsyncRouter(store.getters.menus) // 过滤路由
+          debugger;
+          router.addRoutes(menus) // 动态添加路由
+          global.antRouter = menus // 将路由数据传递给全局变量，做侧边栏菜单渲染工作
 
-          next()
+          // console.log(this.$router)
+          next({ ...to, replace: true })
         } catch (error) {
-          // remove token and go to login page to re-login
+          // 移除token去登录页
           await store.dispatch('user/resetToken')
           Message.error(error || 'Has Error')
           next(`/login?redirect=${to.path}`)
@@ -45,18 +58,37 @@ router.beforeEach(async(to, from, next) => {
       }
     }
   } else {
-    /* has no token*/
-
+    /* 没有token */
     if (whiteList.indexOf(to.path) !== -1) {
-      // in the free login whitelist, go directly
+      // 如果该路由在白名单内, 放行
       next()
     } else {
-      // other pages that do not have permission to access are redirected to the login page.
+      // 不在白名单内不允许通过重定向到登录页
       next(`/login?redirect=${to.path}`)
       NProgress.done()
     }
   }
 })
+
+
+// 遍历后台传来的路由字符串，转换为组件对象
+function filterAsyncRouter(asyncRouterMap) {
+  debugger;
+  const accessedRouters = asyncRouterMap.filter(route => {
+    if (route.component) {
+      if (route.component === 'Layout') { // Layout组件特殊处理
+        route.component = Layout
+      } else {
+        route.component = _import(route.component)// 导入组件
+      }
+    }
+    if (route.children && route.children.length) {
+      route.children = filterAsyncRouter(route.children)
+    }
+    return true
+  })
+  return accessedRouters
+}
 
 router.afterEach(() => {
   // finish progress bar

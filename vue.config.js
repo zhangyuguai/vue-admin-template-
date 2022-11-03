@@ -27,7 +27,7 @@ module.exports = {
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
-  lintOnSave: process.env.NODE_ENV === 'development',
+  lintOnSave: false,
   productionSourceMap: false,
   devServer: {
     port: port,
@@ -36,8 +36,20 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js')
+    //todo 配置代理转发
+    proxy: {
+      '/api': {
+        target: 'http://192.168.43.31:9999',//****这里写上后端提供的基础地址(文末有我的接口地址) *****
+        // ws: true, //是否允许websocket
+        // secure: false,
+        changeOrigin: true,
+      }
+    },
+    // before: require('./mock/mock-server.js')
   },
+
+
+
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
