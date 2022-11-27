@@ -1,5 +1,5 @@
 import { login, logout, getInfo} from '@/api/user'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import { getToken, setToken, removeToken,setTokenTime,removeTokenTime } from '@/utils/auth'
 import { resetRouter } from '@/router'
 
 const getDefaultState = () => {
@@ -7,6 +7,7 @@ const getDefaultState = () => {
     token: getToken(),
     name: '',
     avatar: '',
+    userId:0,
     roles: [], // 角色权限控制按钮显示
     menus: [] // 菜单权限
   }
@@ -35,7 +36,11 @@ const mutations = {
   },
   SET_MENUS: (state, menus) => {
     state.menus = menus // 菜单权限
+  },
+  SET_USERID: (state, id) => {
+    state.userId = id // 用户id
   }
+
 }
 
 const actions = {
@@ -46,9 +51,9 @@ const actions = {
     return new Promise((resolve, reject) => {
       login({ username: username.trim(), password: password }).then(response => {
         const { data } = response.data
-        console.log(data)
-
         commit('SET_TOKEN', data.token)
+        //设置token过期时间
+        setTokenTime(data.expireTime)
         setToken(data.token)
         resolve()
       }).catch(error => {
@@ -65,9 +70,8 @@ const actions = {
         if (!data) {
           return reject('Verification failed, please Login again.')
         }
-        const { name, avatar, roles, routerVos } = data
+        const { name, avatar, roles, menus ,id} = data
 
-        let menus=routerVos
         /**
          * 获取异步路由后加入404路由能解决刷新后【丢失路由跳转404页面】问题
          （因为异步获取路由优先级比静态路由表低，导致404路由在异步添加的路由之前）
@@ -81,6 +85,7 @@ const actions = {
         commit('SET_AVATAR', avatar)
         commit('SET_ROLES', roles) // 角色权限
         commit('SET_MENUS', menus) // 菜单权限
+        commit('SET_USERID', id) // 用户id
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -92,6 +97,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       logout(state.token).then(() => {
         removeToken() // must remove  token  first
+        removeTokenTime()
         resetRouter()
         commit('RESET_STATE')
         resolve()
@@ -106,6 +112,7 @@ const actions = {
     return new Promise(resolve => {
       // 如果后端有退出接口写在下面即可，这里直接退出也没问题
       removeToken() // must remove  token  first
+      removeTokenTime()
       resetRouter()
       commit('RESET_STATE')
       resolve()
