@@ -5,6 +5,7 @@ const getters = {
   avatar: state => state.user.avatar,
   name: state => state.user.name,
   menus: state => state.user.menus, // 菜单权限
-  roles: state => state.user.roles // 角色权限控制按钮
+  roles: state => state.user.roles,// 角色权限控制按钮
+  userId: state=> state.user.userId// 用户id
 }
 export default getters

@@ -4,7 +4,7 @@ import 'normalize.css/normalize.css' // A modern alternative to CSS resets
 
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
-import locale from 'element-ui/lib/locale/lang/en' // lang i18n
+// import locale from 'element-ui/lib/locale/lang/en' // lang i18n
 
 import '@/styles/index.scss' // global css
 
@@ -29,11 +29,26 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // set ElementUI lang to EN
-Vue.use(ElementUI, { locale })
+// Vue.use(ElementUI, { locale })
 // 如果想要中文版 element-ui，按如下方式声明
-// Vue.use(ElementUI)
+Vue.use(ElementUI)
 
 Vue.config.productionTip = false
+//导入封装信息确认提示框组件脚本
+import myconfirm from '@/utils/myconfirm'
+Vue.prototype.$myconfirm = myconfirm;
+
+//导入清空表单工具
+import resetForm from '@/utils/resetForm'
+Vue.prototype.$resetForm = resetForm;
+
+//导入快速复制对象工具
+import objCopy from '@/utils/objCopy'
+Vue.prototype.$objCopy = objCopy;
+
+//导入按钮权限判断
+import hasPermission from '@/permission/index'
+Vue.prototype.hasPermission = hasPermission;
 
 new Vue({
   el: '#app',
