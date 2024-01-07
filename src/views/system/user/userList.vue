@@ -1,42 +1,5 @@
 <template>
   <el-container :style="{ height: containerHeight + 'px' }">
-    <!-- 左侧部门树形菜单列表 -->
-    <el-aside
-      style="
-      padding: 10px 0px 0px 0px;
-      background: #fff;
-      border-right: 1px solid #dfe6ec;
-      "
-      width="220px"
-    >
-      <el-tree
-        style="font-size: 14px"
-        ref="leftTree"
-        :data="deptList"
-        node-key="id"
-        :props="defaultProps"
-        default-expand-all
-        empty-text="暂无数据"
-        :show-checkbox="false"
-        :highlight-current="true"
-        :expand-on-click-node="false"
-        @node-click="handleNodeClick"
-      >
-        <div class="custom-tree-node" slot-scope="{ node, data }">
-          <div>
-            <span v-if="data.children.length == 0">
-            <i class="el-icon-document"></i>
-            </span>
-            <span v-else @click.stop="openBtn(data)">
-            <svg-icon v-if="data.open" icon-class="add-s"/>
-            <svg-icon v-else icon-class="sub-s"/>
-            </span>
-            <!-- 名称 -->
-            <span style="margin-left: 3px">{{ node.label }}</span>
-          </div>
-        </div>
-      </el-tree>
-    </el-aside>
     <!-- 右侧用户数据 -->
     <!-- 表格数据 -->
     <el-main>
@@ -71,23 +34,29 @@
         border
         stripe
         style="width: 100%; margin-bottom: 10px"
+      > <el-table-column
+        label="序号"
+        width="70"
+        align="center"
       >
+        <template slot-scope="scope">
+          {{ (pageNo - 1) * pageSize + scope.$index + 1 }}
+        </template>
+      </el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
         <el-table-column prop="username" label="用户名"></el-table-column>
         <el-table-column prop="realName" label="姓名"></el-table-column>
-        <el-table-column prop="departmentName" label="所属部门"></el-table-column>
         <el-table-column prop="phone" label="电话"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
         <el-table-column align="center" width="290" label="操作">
           <template slot-scope="scope">
             <el-button icon="el-icon-edit" type="primary"
                        size="mini" @click="handleEdit(scope.row)"
-                       v-if="hasPermission('sys:user:edit')"
 
             >编辑
             </el-button>
             <el-button icon="el-icon-delete" type="danger"
                        size="mini" @click="handleDelete(scope.row)"
-                       v-if="hasPermission('sys:user:delete')"
 
             >删除
             </el-button>
@@ -135,13 +104,6 @@
             <el-form-item prop="password" v-if="user.id === ''" label="密码">
               <el-input type="password" v-model="user.password"></el-input>
             </el-form-item>
-            <el-form-item prop="departmentName" label="所属部门">
-              <el-input
-                v-model="user.departmentName"
-                :readonly="true"
-                @click.native="selectDepartment()"
-              ></el-input>
-            </el-form-item>
             <el-form-item prop="realName" label="姓名">
               <el-input v-model="user.realName"></el-input>
             </el-form-item>
@@ -169,47 +131,13 @@
                 :before-upload="beforeAvatarUpload"
                 class="avatar-uploader"
                 :data="uploadHeader"
-                action="http://localhost:8080/api/oss/file/upload?module=avatar"
+                action="/api/eduOss/fileOss?module=avatar"
               >
                 <img v-if="user.avatar" :src="user.avatar">
                 <i v-else class="el-icon-plus avatar-uploader-icon"/>
               </el-upload>
             </el-form-item>
           </el-form>
-        </div>
-      </system-dialog>
-      <!-- 选择所属部门弹窗   -->
-      <system-dialog
-        :height="departmentDialog.height"
-        :title="departmentDialog.title"
-        :visible="departmentDialog.visible"
-        :width="departmentDialog.width"
-        @onClose="onParentClose()"
-        @onConfirm="onParentConfirm()"
-      >
-        <div slot="content">
-          <el-tree
-            ref="departmentTree"
-            :data="departmentTreeData"
-            node-key="id"
-            :default-expand-all="true"
-            :highlight-current="true"
-            :expand-on-click-node="false"
-            :props="defaultProps"
-            @node-click="handleDepartmentNodeClick"
-          >
-            <div class="customer-tree-node" slot-scope="{ node, data }">
-            <span v-if="data.children.length === 0">
-              <i class="el-icon-document"></i>
-            </span>
-              <span v-else @click="parentChangeBtn(data)">
-          <svg-icon v-if="data.open" icon-class="sub-s"/>
-          <svg-icon v-else icon-class="add-s"/>
-          </span>
-              <span style="margin-left: 5px">{{ node.label }}</span>
-            </div>
-
-          </el-tree>
         </div>
       </system-dialog>
       <!-- 分配角色窗口 -->
@@ -256,13 +184,11 @@
         </div>
       </system-dialog>
     </el-main>
-
   </el-container>
 
 </template>
 
 <script>
-import { getDepartmentList, getParentList } from '@/api/department'
 import {
   addUser,
   deleteUser,
@@ -343,8 +269,6 @@ export default {
       //新增修改用户表单数据
       user: {
         id: '',
-        departmentId: '',
-        departmentName: '',
         email: '',
         realName: '',
         phone: '',
@@ -356,7 +280,6 @@ export default {
       },
       //新增修改表单验证规则
       rules: {
-        departmentName: [{ required: true, trigger: 'change', message: '请选择所属部门' }],
         realName: [{ required: true, trigger: 'blur', message: '请填写姓名' }],
         phone: [{ trigger: 'blur', validator: validatePhone }],
         username: [{ required: true, trigger: 'blur', message: '请填写登录名' }],
@@ -387,11 +310,16 @@ export default {
     /**
      * 查询用户数据列表
      */ async search() {
+      console.log(2222222222)
+      debugger;
       let result = await getUserList(this.searchModel)
-      const { code, data } = result.data
-      if (code === 200) {
+      console.log(result.data)
+      const { success, data } = result.data
+      if (success) {
         //表格数据
+        // console.log(data)
         this.userList = data.records
+        // console.log(data.records)
         this.total = data.total
       }
     },
@@ -406,17 +334,6 @@ export default {
       this.userDialog.title = '新增用户'
       this.userDialog.visible = true
     },
-    //todo
-    async selectDepartment() {
-      let result = await getParentList()
-      const { code, data } = result.data
-      if (code === 200) {
-        //赋值给部门树
-        this.departmentTreeData = data
-        //打开所属部门窗口
-        this.departmentDialog.visible = true
-      }
-    },
     /**
      * 重置搜素
      * @returns {Promise<void>}
@@ -429,15 +346,6 @@ export default {
       this.searchModel.username = ''
       this.searchModel.departmentId = ''
       this.search()
-    },
-    //获取部门列表
-    async getDeptList() {
-      let result = await getDepartmentList()
-      const { code, data } = result.data
-
-      if (code === 200) {
-        this.deptList = data
-      }
     },
     /**
      * 左侧树节点点击事件
@@ -482,7 +390,7 @@ export default {
      * 分配角色
      * @param row
      */ async assignRole(row) {
-       //清空选中角色数组
+      //清空选中角色数组
       this.selectedIds=[];
       this.assignDialog.title = `给【${row.realName}】分配角色`
       this.assignDialog.visible = true
@@ -491,8 +399,10 @@ export default {
       //获取当前分配角色已拥有的角色
       await this.getUserAssignRoleIds(row.id);
       this.selectedUserId=row.id
+      console.log(this.selectedIds,this.assignRoleList)
       this.selectedIds.forEach((key) => {
         this.assignRoleList.forEach((item) => {
+          console.log(5555555555)
           //当被选中角色id和当前遍历到的角色id相同
           if (key === item.id) {
             //勾选
@@ -511,8 +421,9 @@ export default {
       this.roleVo.pageNo=pageNo;
       this.roleVo.pageSize=pageSize;
       let result = await getAssignRoleList(this.roleVo);
-      const {code,data} = result.data;
-      if (code === 200) {
+      console.log(result.data)
+      const {success,data} = result.data;
+      if (success) {
         this.assignRoleList=data.records;
         this.roleVo.total=data.total;
       }
@@ -523,9 +434,10 @@ export default {
      * @param userId
      */
     async getUserAssignRoleIds(userId){
-     let result=await getRoleIdByUserId(userId);
-      const {code,data}=result.data;
-      if (code === 200) {
+      let result=await getRoleIdByUserId(userId);
+      console.log("角色",result.data)
+      const {success,data}=result.data;
+      if (success) {
         //赋值被选中的角色id
         this.selectedIds=data;
       }
@@ -562,7 +474,7 @@ export default {
             //todo 修改
             result = await updateUser(this.user)
           }
-          const { code, success, msg } = result.data
+          const { success, msg } = result.data
           if (success) {
             this.$message.success(msg)
             //刷新列表
@@ -575,38 +487,13 @@ export default {
         }
       })
     },
-    //所属部门弹窗取消事件
-    onParentClose() {
-      this.departmentDialog.visible = false
-    },
-    //所属部门弹窗确认事件
-    onParentConfirm() {
-      this.departmentDialog.visible = false
-    },
-    //点击所属部门树节点
-    handleDepartmentNodeClick(data) {
-
-      //将所选的部门赋值给user表单
-      this.user.departmentId = data.id
-      this.user.departmentName = data.departmentName
-
-    },
-    /**
-     * 所属部门树节点图标点击
-     * @param data
-     */
-    parentChangeBtn(data) {
-      //修改折叠展开状态
-      data.open = !data.open
-      this.$refs.departmentTree.store.nodesMap[data.id].expanded = !data.open
-    },
     /**
      * 上传成功回调
      * @param res
      * @param file
      */
     handleAvatarSuccess(res, file) {
-      this.user.avatar = res.data
+      this.user.avatar = res.data.url
       // 强制重新渲染
       this.$forceUpdate()
     },
@@ -636,17 +523,18 @@ export default {
      * 分配角色确认事件
      */ async onAssignConfirm() {
       let confirm=true;
-       if (this.selectedIds.length===0){
-         confirm = await this.$myconfirm('当前用户还未分配角色,是否继续?', 'warning')
-       }
+      if (this.selectedIds.length===0){
+        confirm = await this.$myconfirm('当前用户还未分配角色,是否继续?', 'warning')
+      }
       let params={
         userId: this.selectedUserId,
         roleIds: this.selectedIds
       }
       if (confirm) {
-       let result=await saveUserRole(params);
-       const {code,msg,success}=result.data
-        if (code === 200&&success) {
+        let result=await saveUserRole(params);
+        console.log("確認",result.data)
+        const {msg,success}=result.data
+        if (success) {
 
           this.$message.success(msg)
         }else {
@@ -688,7 +576,6 @@ export default {
     }
   },
   created() {
-    this.getDeptList()
     this.search()
   },
   mounted() {

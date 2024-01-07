@@ -1,5 +1,6 @@
 import store from '@/store'
 export default function hasPermission(params){
+  console.log(65555)
   let tag = false;//标识是否拥有权限
   //从vuex中取出用户权限
   const roles = store.getters && store.getters.roles

@@ -30,7 +30,7 @@ const service = axios.create({
 // todo 请求头添加token
 service.interceptors.request.use(
   config => {
-    debugger;
+
     //获取当前系统时间
     let currentTime = new Date().getTime();
     //获取token过期时间
@@ -48,8 +48,7 @@ service.interceptors.request.use(
             //调用刷新token的方法
           return refreshTokenInfo().then(res=>{
             const {success,data}=res.data
-            console.log(res.data);
-            debugger;
+            console.log(res.data)
             //判断是否成功
             if(success){
               console.log('token',data.token)
@@ -116,7 +115,7 @@ service.interceptors.response.use(
           })
           break
         case 2000:
-          debugger;
+
             Message({
               message:message,
               type: 'success'

@@ -364,7 +364,7 @@ export default {
      * 设置子节点
      */
     setChild(childNodes, checkList) {
-      debugger;
+
       //判断是否存在子节点
       if (childNodes && childNodes.length > 0) {
         //循环所有权限

@@ -38,13 +38,11 @@ router.beforeEach(async(to, from, next) => {
             global.antRouter = []
             next()
           }
-
           const menus = filterAsyncRouter(store.getters.menus) // 过滤路由
 
           router.addRoutes(menus) // 动态添加路由
           global.antRouter = menus // 将路由数据传递给全局变量，做侧边栏菜单渲染工作
 
-          // console.log(this.$router)
           next({ ...to, replace: true })
         } catch (error) {
           // 移除token去登录页
